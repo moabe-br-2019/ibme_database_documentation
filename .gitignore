@@ -1,6 +1,9 @@
 # Supabase directory
 supabase/
 
+# Claude Code settings
+.claude/
+
 # Node modules
 node_modules/
 

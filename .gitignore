@@ -4,6 +4,9 @@ supabase/
 # Claude Code settings
 .claude/
 
+# Procedures directory
+procedures/
+
 # Node modules
 node_modules/
 

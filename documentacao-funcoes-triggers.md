@@ -216,15 +216,15 @@ Evita erros de dados! Garante que a presença sempre seja registrada na data cor
 
 ---
 
-#### <a name="update_student_attendance_rate"></a>`update_student_attendance_rate()` - TRIGGER
+#### <a name="update_student_attendance_rate"></a>`update_student_attendance_rate()` - FUNÇÃO TRIGGER
 
-**Quando é executado:** Automaticamente após inserir ou atualizar um registro de presença.
+**Tipo:** Função definida como trigger, mas atualmente não está ativa/anexada a nenhuma tabela.
 
-**O que faz:**
-1. Calcula a taxa de frequência do aluno
-2. Conta presenças + faltas justificadas vs total de aulas
-3. Calcula o percentual (arredondado para 2 casas decimais)
-4. Atualiza o campo `Attendance Rate` na tabela `Students`
+**Propósito original:**
+1. Calcular a taxa de frequência do aluno
+2. Contar presenças + faltas justificadas vs total de aulas
+3. Calcular o percentual (arredondado para 2 casas decimais)
+4. Atualizar o campo `Attendance Rate` na tabela `Students`
 
 **Fórmula:**
 ```
@@ -234,6 +234,8 @@ Taxa = (Presenças + Faltas Justificadas) / Total de Registros × 100
 **Exemplo:**
 - 8 presenças + 1 falta justificada + 1 falta = 10 aulas
 - Taxa = (8 + 1) / 10 × 100 = 90%
+
+**Nota:** Esta função está definida no schema mas não está anexada à tabela `attendance` no momento. O cálculo da taxa de presença pode estar sendo feito de outra forma na aplicação.
 
 ---
 
@@ -298,6 +300,10 @@ Taxa = (Presenças + Faltas Justificadas) / Total de Registros × 100
 #### <a name="get_teacher_impact_survey_stats"></a>`get_teacher_impact_survey_stats(...)`
 
 **Propósito:** Avaliar o impacto do programa nos professores.
+
+**Versões disponíveis:**
+- **Versão 1:** `get_teacher_impact_survey_stats(p_city, p_state, p_program, p_teacher, p_start_date, p_end_date)` - Retorna dados agregados
+- **Versão 2:** `get_teacher_impact_survey_stats(p_city, p_state, p_program, p_teacher, p_start_date, p_end_date, p_include_total)` - Permite incluir ou não totais gerais
 
 **Retorna:** Estatísticas sobre como o programa afeta:
 - Desenvolvimento profissional dos professores
@@ -376,6 +382,12 @@ Cada uma dessas funções retorna estatísticas específicas sobre um aspecto so
 10. **get_stats_servicos_politicas**: Serviços públicos acessados
 11. **get_stats_cursando**: Nível escolar atual do aluno
 12. **get_stats_recebe_ibme**: Se recebe bolsa/auxílio do IBME
+
+**Versões disponíveis:**
+
+Cada função possui duas versões:
+- **Versão sem parâmetros:** `get_stats_xxx()` - Retorna estatísticas de todos os alunos
+- **Versão com filtros:** `get_stats_xxx(filter_instrument, filter_gender, filter_ethnicity, filter_age_range, filter_date_start, filter_date_end, filter_status, filter_classes, filter_programa)` - Permite filtrar os dados
 
 **Formato de retorno (todas):**
 ```
@@ -487,11 +499,11 @@ SELECT insert_rel_media_survey_monitoramento_sinta_som(
 
 ### Triggers Auxiliares
 
-#### <a name="normalize_pavimentacao"></a>`normalize_pavimentacao()` - TRIGGER
+#### <a name="normalize_pavimentacao"></a>`normalize_pavimentacao()` - FUNÇÃO TRIGGER
 
-**Quando é executado:** ANTES de inserir ou atualizar dados na tabela `Sociocultural Profile`.
+**Tipo:** Função definida como trigger, mas atualmente não está ativa/anexada a nenhuma tabela.
 
-**O que faz:**
+**Propósito original:**
 1. Remove vírgulas do campo "pavimentação"
 2. Remove espaços extras (múltiplos espaços viram um único espaço)
 3. Limpa (trim) espaços no início e fim
@@ -500,7 +512,7 @@ SELECT insert_rel_media_survey_monitoramento_sinta_som(
 - Antes: `"  Asfalto  ,    Calçada  "`
 - Depois: `"Asfalto Calçada"`
 
-**Por que é útil:** Padroniza os dados para facilitar análises e comparações.
+**Nota:** Esta função está definida no schema mas não está anexada à tabela `Sociocultural Profile` no momento. Para ativá-la, seria necessário criar um trigger que a execute.
 
 ---
 
@@ -578,7 +590,6 @@ SELECT insert_rel_media_survey_monitoramento_sinta_som(
 |---------|--------|--------|-----------|
 | `trg_check_attendance_date` | BEFORE INSERT/UPDATE | `check_attendance_date_matches_schedule` | Valida consistência de datas |
 | `trg_update_attendance_timestamp` | BEFORE UPDATE | `update_updated_at_column` | Atualiza timestamp |
-| (automático) | AFTER INSERT/UPDATE | `update_student_attendance_rate` | Recalcula taxa de presença |
 
 ### Tabela: `schedule`
 
@@ -601,6 +612,15 @@ SELECT insert_rel_media_survey_monitoramento_sinta_som(
 
 ---
 
+### Funções Trigger Não Ativas
+
+As seguintes funções estão definidas como triggers no schema mas não estão atualmente anexadas a nenhuma tabela:
+
+- **`normalize_pavimentacao()`** - Normalizaria o campo pavimentação na tabela `Sociocultural Profile`
+- **`update_student_attendance_rate()`** - Calcularia automaticamente a taxa de presença dos alunos
+
+---
+
 ## 💡 Fluxos de Trabalho Comuns
 
 ### Fluxo 1: Criar Agendamento e Registrar Presença
@@ -618,9 +638,9 @@ SELECT insert_rel_media_survey_monitoramento_sinta_som(
    ↓
 4. Professor marca presença usando bulk_update_attendance_by_student
    ↓
-5. TRIGGER: update_student_attendance_rate
-   - Recalcula taxa de presença do aluno
-   - Atualiza campo na tabela Students
+5. Aplicação calcula taxa de presença
+   - A taxa é calculada pela aplicação ou por processo externo
+   - Atualiza campo na tabela Students conforme necessário
 ```
 
 ### Fluxo 2: Pesquisa de Satisfação

@@ -307,6 +307,17 @@ Monitora a aplicação da metodologia nas turmas do programa.
 #### **rel_media_survey_monitoramento_sinta_som**
 Armazena URLs de mídias (fotos, vídeos) relacionadas às pesquisas de monitoramento.
 
+#### **Survey_Masterclass_Sinta_Som**
+Pesquisa aplicada em eventos de masterclass do programa Sinta o Som.
+
+**Informações coletadas:**
+- Avaliações dos participantes sobre a masterclass
+- Feedback sobre conteúdo e qualidade
+- Impacto do evento
+
+#### **relatorios_sinta_som**
+Armazena relatórios consolidados do programa Sinta o Som para análise e acompanhamento.
+
 ---
 
 ### 🛠️ Tabelas Auxiliares
@@ -336,8 +347,24 @@ Gerencia códigos de convite para alunos (provavelmente para acesso ao sistema).
 #### **Customer Satisfaction Survey**
 Pesquisa genérica de satisfação do cliente/comunidade.
 
+#### **Customer Satisfaction Survey options**
+Armazena as opções de resposta disponíveis para a pesquisa de satisfação do cliente.
+
+**Informações armazenadas:**
+- Opções de resposta padronizadas
+- Escalas de avaliação
+- Categorias de feedback
+
 #### **survey_statements (Declarações de Pesquisa)**
 Armazena as declarações/perguntas usadas nas pesquisas.
+
+#### **wake_up_supabase**
+Tabela técnica utilizada para manter o banco de dados ativo em ambientes serverless.
+
+**Propósito:**
+- Prevenir hibernação do banco em ambientes como Supabase free tier
+- Mantém atividade mínima através da função `rotate_wake_up()`
+- Evita cold starts em aplicações críticas
 
 ---
 

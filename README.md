@@ -154,9 +154,9 @@ database_docs/
 
 ## 📈 Estatísticas do Banco
 
-- **Tabelas principais:** 40+
+- **Tabelas principais:** 37
 - **Views:** 3
-- **Funções:** 30+
+- **Funções:** 37
 - **Triggers:** 6
 - **Partições de presença:** 5 (2024-2027 + default)
 - **Tabelas de relacionamento:** 4

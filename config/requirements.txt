@@ -1,0 +1,13 @@
+# Dependências para o script de verificação de sincronização
+
+# Cliente Supabase para Python
+supabase>=2.0.0
+
+# Cliente HTTP
+requests>=2.31.0
+
+# Carregar variáveis de ambiente
+python-dotenv>=1.0.0
+
+# Opcional: para análise de dados mais avançada
+pandas>=2.0.0

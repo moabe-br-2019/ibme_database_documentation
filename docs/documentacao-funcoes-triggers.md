@@ -55,6 +55,8 @@ Este documento explica as funções armazenadas (stored procedures) e triggers (
 - [insert_rel_media_survey_monitoramento_sinta_som](#insert_rel_media_survey_monitoramento_sinta_som)
 - [delete_expired_invite_codes](#delete_expired_invite_codes)
 - [rotate_wake_up](#rotate_wake_up)
+- [assign_caravana_to_customer_survey](#assign_caravana_to_customer_survey)
+- [students_with_birthday_on](#students_with_birthday_on)
 
 ### 6. Triggers Auxiliares
 - [normalize_pavimentacao](#normalize_pavimentacao)
@@ -62,6 +64,8 @@ Este documento explica as funções armazenadas (stored procedures) e triggers (
 - [process_servicos_politicas](#process_servicos_politicas)
 - [set_modified_date](#set_modified_date)
 - [update_updated_at_column](#update_updated_at_column)
+- [handle_update_student_age](#handle_update_student_age)
+- [update_modified_date](#update_modified_date)
 
 ---
 
@@ -260,9 +264,10 @@ Taxa = (Presenças + Faltas Justificadas) / Total de Registros × 100
 **Propósito:** Contar respostas das pesquisas de satisfação com diversos filtros.
 
 **Parâmetros:**
-- Filtros geográficos (cidade, estado)
-- Filtros temporais (data início e fim)
+- Filtros geográficos: `p_city`, `p_state`
+- Filtros temporais: `p_start_date`, `p_end_date`
 - `p_include_total`: Se deve incluir totais gerais
+- `p_sponsor`: Filtra por patrocinador *(novo)*
 
 **Retorna:** JSON com contagens categorizadas das respostas.
 
@@ -346,6 +351,8 @@ Taxa = (Presenças + Faltas Justificadas) / Total de Registros × 100
 **Parâmetros de filtro:**
 - Instrumento, gênero, etnia, faixa etária
 - Intervalo de datas, status, turmas, programa
+- `filter_teacher`: filtra por professor específico *(novo)*
+- `filter_sponsor`: filtra por patrocinador específico *(novo)*
 
 **Retorna:** JSON com estatísticas agregadas de:
 - Se mora em comunidade
@@ -387,7 +394,9 @@ Cada uma dessas funções retorna estatísticas específicas sobre um aspecto so
 
 Cada função possui duas versões:
 - **Versão sem parâmetros:** `get_stats_xxx()` - Retorna estatísticas de todos os alunos
-- **Versão com filtros:** `get_stats_xxx(filter_instrument, filter_gender, filter_ethnicity, filter_age_range, filter_date_start, filter_date_end, filter_status, filter_classes, filter_programa)` - Permite filtrar os dados
+- **Versão com filtros:** `get_stats_xxx(filter_instrument, filter_gender, filter_ethnicity, filter_age_range, filter_date_start, filter_date_end, filter_status, filter_classes, filter_programa, filter_teacher, filter_sponsor)` - Permite filtrar os dados
+
+> **Novos filtros (adicionados em abril/2026):** `filter_teacher` (filtra por professor) e `filter_sponsor` (filtra por patrocinador). Ambos opcionais.
 
 **Formato de retorno (todas):**
 ```
@@ -497,6 +506,51 @@ SELECT insert_rel_media_survey_monitoramento_sinta_som(
 
 ---
 
+#### <a name="assign_caravana_to_customer_survey"></a>`assign_caravana_to_customer_survey(p_cidade, p_estado, p_caravana_unique_id)`
+
+**Propósito:** Vincular retroativamente uma caravana (Sinta o Som) às respostas da `Customer Satisfaction Survey` correspondentes pela localização.
+
+**Parâmetros:**
+- `p_cidade`: Cidade onde a caravana ocorreu
+- `p_estado`: Estado onde a caravana ocorreu
+- `p_caravana_unique_id`: ID único da caravana em `caravana_sinta_o_som`
+
+**Como funciona:**
+1. Busca respostas em `Customer Satisfaction Survey` com a mesma cidade/estado (comparação com ILIKE)
+2. Atualiza o campo `caravana` nessas respostas com o ID da caravana
+3. Retorna quantas linhas foram atualizadas
+
+**Uso típico:**
+```sql
+SELECT assign_caravana_to_customer_survey('São Paulo', 'SP', 'caravana-abc123');
+-- Retorna: 42 (respostas vinculadas)
+```
+
+---
+
+#### <a name="students_with_birthday_on"></a>`students_with_birthday_on(p_day, p_month)`
+
+**Propósito:** Listar alunos que fazem aniversário em um dia e mês específicos.
+
+**Parâmetros:**
+- `p_day`: Dia do aniversário (inteiro)
+- `p_month`: Mês do aniversário (inteiro)
+
+**Retorna:** Tabela com:
+- `unique id`: ID do aluno
+- `First Name`: Primeiro nome
+- `fullname`: Nome completo
+- `DOB`: Data de nascimento
+- `age`: Idade calculada
+
+**Exemplo de uso:**
+```sql
+SELECT * FROM students_with_birthday_on(15, 4);
+-- Lista alunos que fazem aniversário em 15 de abril
+```
+
+---
+
 ### Triggers Auxiliares
 
 #### <a name="normalize_pavimentacao"></a>`normalize_pavimentacao()` - FUNÇÃO TRIGGER
@@ -582,6 +636,28 @@ SELECT insert_rel_media_survey_monitoramento_sinta_som(
 
 ---
 
+#### <a name="handle_update_student_age"></a>`handle_update_student_age()` - FUNÇÃO TRIGGER
+
+**Propósito:** Atualizar automaticamente a idade dos alunos.
+
+**Quando é executado:** Configurado como trigger na tabela `Students` (provavelmente no INSERT/UPDATE ou via cron).
+
+**O que faz:** Recalcula o campo de idade do aluno com base na data de nascimento (`DOB`).
+
+**Por que é útil:** Mantém o campo de idade sempre atualizado sem precisar de atualizações manuais.
+
+---
+
+#### <a name="update_modified_date"></a>`update_modified_date()` - FUNÇÃO TRIGGER
+
+**Propósito:** Atualizar automaticamente o campo `modified_date` com o timestamp atual.
+
+**Semelhante a:** `set_modified_date()` e `update_updated_at_column()` — são variações do mesmo padrão de auditoria.
+
+**Uso:** Aplicado em tabelas que possuem o campo `modified_date` (como `inventory` e `patrimonio`).
+
+---
+
 ## 🔗 Mapa de Triggers
 
 ### Tabela: `attendance`
@@ -609,6 +685,20 @@ SELECT insert_rel_media_survey_monitoramento_sinta_som(
 | Trigger | Quando | Função | Propósito |
 |---------|--------|--------|-----------|
 | `trg_student_impact_survey_modified` | BEFORE UPDATE | `set_modified_date` | Atualiza data de modificação |
+
+---
+
+### Tabela: `inventory` e `patrimonio`
+
+| Trigger | Quando | Função | Propósito |
+|---------|--------|--------|-----------|
+| (via trigger) | BEFORE UPDATE | `update_modified_date` | Atualiza `modified_date` automaticamente |
+
+### Tabela: `Students`
+
+| Trigger | Quando | Função | Propósito |
+|---------|--------|--------|-----------|
+| (via trigger) | INSERT/UPDATE | `handle_update_student_age` | Recalcula a idade do aluno |
 
 ---
 

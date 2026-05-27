@@ -35,3 +35,27 @@ yarn-error.log*
 # Temporary files
 *.tmp
 *.temp
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+ENV/
+
+# Databases / cache local
+*.db
+*.sqlite
+data/
+
+# Logs de sync e migration (gerados automaticamente)
+logs/sync_report_*.json
+logs/sync_classes_log_*.json
+logs/sync_programs_log_*.json
+logs/sync_schedules_log_*.json
+logs/migration_log_*.json
+# Manter os relatórios de diff de schema no controle de versão
+# logs/schema_diff_report.json  <- rastreado intencionalmente

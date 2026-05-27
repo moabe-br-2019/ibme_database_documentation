@@ -16,6 +16,8 @@ Este banco de dados foi projetado para gerenciar um programa educacional musical
 - [Tabelas de Relacionamento](#-tabelas-de-relacionamento-many-to-many) - Conexões N:N
 - [Pesquisas e Avaliações](#-pesquisas-e-avaliações) - Satisfação e impacto
 - [Perfil Sociocultural](#-indicadores-e-perfil-sociocultural) - Dados socioeconômicos
+- [Inventário e Patrimônio](#-inventário-e-patrimônio) - Instrumentos e bens físicos
+- [Projetos Especiais](#-projetos-especiais) - Caravana, Funarte, Santander, Treinamentos
 - [Views](#-views-visões) - Consultas otimizadas
 - [Relacionamentos](#-principais-relacionamentos) - Mapa de conexões
 - [Casos de Uso](#-casos-de-uso-principais) - Exemplos práticos
@@ -317,6 +319,98 @@ Pesquisa aplicada em eventos de masterclass do programa Sinta o Som.
 
 #### **relatorios_sinta_som**
 Armazena relatórios consolidados do programa Sinta o Som para análise e acompanhamento.
+
+---
+
+### 📦 Inventário e Patrimônio
+
+#### **inventory (Inventário de Instrumentos)**
+Gerencia o inventário de instrumentos musicais emprestados ou sob responsabilidade do programa.
+
+**Informações armazenadas:**
+- Identificação do item (marca, modelo, número de série, código)
+- Instrumento e tamanho
+- Condição atual (enum `condition_status`: `new`, `good`, `fair`, `poor`, `under_maintenance`, `retired`)
+- Data de recebimento
+- Proprietário (`owner`) e responsável atual (`issued_to` → aluno ou professor)
+- Termo assinado e URL da assinatura do responsável
+- Fotos e QR code (URL)
+- Programa e campus ao qual pertence
+- Campos de auditoria (admin, creator, created_date, modified_date)
+
+**Chave primária:** `id` (UUID)
+
+**Índices:** bubble_id, condition, instrument, issued_to, programa
+
+**Tipo ENUM usado:** `condition_status` — valores: `new`, `good`, `fair`, `poor`, `under_maintenance`, `retired`
+
+#### **patrimonio (Patrimônio Físico)**
+Registra bens físicos (equipamentos, móveis, etc.) pertencentes à instituição, separados dos instrumentos do inventário.
+
+**Informações armazenadas:**
+- Código e descrição do bem
+- Condição atual (enum `condition_status`)
+- Data de recebimento e proprietário
+- Programa e campus ao qual pertence
+- Campos de auditoria (admin, creator, created_date, modified_date)
+
+**Chave primária:** `id` (UUID)
+
+**Índices:** bubble_id, condition, programa
+
+**Diferença do `inventory`:** O patrimônio registra bens gerais da instituição (sem vínculo de empréstimo a alunos), enquanto `inventory` rastreia instrumentos com controle de quem está com o item.
+
+---
+
+### 🚀 Projetos Especiais
+
+#### **caravana_sinta_o_som**
+Registra as caravanas realizadas no programa Sinta o Som, com informações geográficas e de patrocínio.
+
+**Informações armazenadas:**
+- Cidade e estado onde ocorreu a caravana
+- Patrocinador responsável
+- ID único da caravana
+
+**Relacionamento:**
+- Vinculada à `Customer Satisfaction Survey` através do campo `caravana` (preenchido automaticamente pela função `assign_caravana_to_customer_survey`)
+
+#### **Santander_Formularios**
+Armazena respostas de formulários do projeto Santander.
+
+**Informações armazenadas:**
+- ID do formulário (`form_id`) e ID da resposta (`response_id`)
+- Campos de resposta: q1, q2_a, q2_b, q2_c, q2_d
+- Referência ao registro no Bubble (`bubble_id`)
+- Data de criação
+
+**Políticas de acesso:** Permissiva para autenticados e anônimos.
+
+#### **Inscriçãoes Treinamento**
+Gerencia inscrições em eventos e treinamentos promovidos pelo IBME.
+
+**Informações armazenadas:**
+- Nome completo, email e cargo do participante
+- Tamanho da camisa e segmento
+- Autorização de uso de imagem
+- Cidade, estado e patrocinador vinculado
+- Nome do treinamento
+- Referência ao registro no Bubble (`bubble_unique_id`)
+
+#### **funarate_avaliacao_responsaveis**
+Coleta avaliações dos responsáveis em eventos da Funarte.
+
+**Informações armazenadas:**
+- Avaliações por categoria: acesso à cultura (q1, q2), desenvolvimento pessoal (q1-q5, escala numérica), impacto educacional (q1, q2), avaliação das atividades (q1, q2)
+- Campo de sugestões abertas
+- ID e timestamps
+
+**Políticas de acesso:** Acesso total para anônimos.
+
+#### **funarte_avaliacao_aluno**
+Coleta avaliações dos alunos em eventos da Funarte.
+
+**Políticas de acesso:** Leitura e inserção permitidas para anônimos.
 
 ---
 
